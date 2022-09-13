@@ -2,16 +2,19 @@ package handler
 
 import (
 	"context"
-	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"gorm.io/gorm"
+	"errors"
 	"time"
 	"user_srv/user_srv/global"
 	"user_srv/user_srv/model"
 	"user_srv/user_srv/pkg/password"
 	"user_srv/user_srv/proto"
+
+	"github.com/golang/protobuf/ptypes/empty"
+	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"gorm.io/gorm"
 )
 
 // Paginate 官方文档中的分页
@@ -33,6 +36,7 @@ func Paginate(page, pageSize int) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
+// ModelToResponse 方便将model.User转换为proto的数据
 func ModelToResponse(user model.User) proto.UserInfoResponse {
 	//grpc中message有默认值,不能随便赋值
 	//要搞清哪些字段有默认值
@@ -152,9 +156,13 @@ func (s *UserServer) UpdateUser(ctx context.Context, req *proto.UpdateUserInfo) 
 
 }
 func (s *UserServer) CheckPassWord(ctx context.Context, req *proto.CheckPasswordInfo) (*proto.ChecResponse, error) {
-	if password.Compare(req.EncryptedPassword, req.Password) {
-		return &proto.ChecResponse{Success: true}, nil
+	if err := password.Compare(req.EncryptedPassword, req.Password); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return &proto.ChecResponse{Success: false}, status.Error(codes.InvalidArgument, "密码不匹配")
+		} else {
+			return &proto.ChecResponse{Success: false}, status.Error(codes.Unknown, err.Error())
+		}
 	} else {
-		return &proto.ChecResponse{Success: false}, status.Error(codes.InvalidArgument, "密码不匹配")
+		return &proto.ChecResponse{Success: true}, nil
 	}
 }

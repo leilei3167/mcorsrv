@@ -1,12 +1,12 @@
-package main
+package initialize
 
 import (
 	"fmt"
 	"log"
 	"os"
 	"time"
+	"user_srv/user_srv/global"
 	"user_srv/user_srv/model"
-	"user_srv/user_srv/pkg/password"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -14,10 +14,11 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-func main() {
-
+func InitDB() {
 	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取dsn详情
-	dsn := "root:123456@tcp(127.0.0.1:3306)/mxshop_user_srv?charset=utf8mb4&parseTime=True&loc=Local"
+	c := global.ServerConfig.MysqlInfo
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		c.User, c.Password, c.Host, c.Port, c.Name)
 
 	//定义全局的sql,这样能够将某些慢sql打印出来,便于debug
 	newLogger := logger.New(
@@ -29,26 +30,14 @@ func main() {
 			Colorful:                  true,        // 禁用彩色打印
 		},
 	)
-
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	var err error
+	global.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:         newLogger,
 		NamingStrategy: schema.NamingStrategy{SingularTable: true}, //单数命名表
 	})
 	if err != nil {
 		panic(err)
 	}
-	_ = db.AutoMigrate(&model.User{})
 
-	pwd := "admin123"
-
-	for i := 0; i < 10; i++ {
-		p, _ := password.Encode(pwd)
-		user := model.User{
-			NickName: fmt.Sprintf("leilei_%d", i),
-			Mobile:   fmt.Sprintf("1860284316%d", i),
-			Password: p,
-		}
-		db.Save(&user)
-	}
-
+	_ = global.DB.AutoMigrate(&model.User{})
 }
