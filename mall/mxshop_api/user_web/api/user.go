@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v9"
-	"github.com/hashicorp/consul/api"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,9 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
@@ -52,28 +49,6 @@ func HandleGRPCErrorToHttp(err error, c *gin.Context) {
 }
 
 func GetUserList(c *gin.Context) {
-	consulInfo := global.ServerConfig.ConsulInfo
-	//0.从注册中心获取到用户服务的信息(服务发现,输入服务名,如"user-srv)
-	cfg := api.DefaultConfig()
-	cfg.Address = fmt.Sprintf("%s:%d", consulInfo.Host, consulInfo.Port)
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": "无法连接consul"})
-		return
-	}
-	data, err := client.Agent().ServicesWithFilter(fmt.Sprintf("Service == \"%s\"",
-		global.ServerConfig.UserSrvInfo.Name))
-	if err != nil {
-		panic(err)
-	}
-	userSrvHost := ""
-	userSrvPort := 0
-	for k, v := range data {
-		userSrvHost = v.Address
-		userSrvPort = v.Port
-		zap.S().Debugf("key:%v value:%v", k, v)
-		break
-	}
 
 	if info, ok := c.Get("claims"); ok {
 		zap.S().Infof("收到调用:%#v", info.(*models.CustomClaims)) //获取调用者的信息
@@ -84,18 +59,7 @@ func GetUserList(c *gin.Context) {
 	pSize := c.DefaultQuery("psize", "10")
 	pSizeInt, _ := strconv.Atoi(pSize)
 
-	//连接用户gRPC服务
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", userSrvHost, userSrvPort),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		zap.S().Errorw("[GetUserList]连接用户服务失败", "msg", err.Error())
-		return
-	}
-
-	//生成客户端调用gRPC接口
-	userSrvClient := proto.NewUserClient(userConn)
-
-	rsp, err := userSrvClient.GetUserList(c, &proto.PageInfo{
+	rsp, err := global.UserSrvClient.GetUserList(c, &proto.PageInfo{
 		Pn:    uint32(pnInt),
 		PSize: uint32(pSizeInt),
 	})
@@ -136,23 +100,12 @@ func PasswordLogin(c *gin.Context) {
 	}
 
 	//此处进行验证码(store是包内的全局储存),第三个参数为true代表使用一次后将清除验证码缓存(即判断后验证码就失效)
-	if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, true) {
+	if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, false) {
 		c.JSON(http.StatusBadRequest, gin.H{"captcha": "验证码错误"})
 		return
 	}
 
-	//2.连接用户gRPC服务
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserSrvInfo.Host, global.ServerConfig.UserSrvInfo.Port),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		zap.S().Errorw("[GetUserList]连接用户服务失败", "msg", err.Error())
-		return
-	}
-
-	//3.登录的逻辑
-	//生成客户端调用gRPC接口
-	userSrvClient := proto.NewUserClient(userConn)
-	if rsp, err := userSrvClient.GetUserByMobile(c, &proto.MobileRequest{
+	if rsp, err := global.UserSrvClient.GetUserByMobile(c, &proto.MobileRequest{
 		Mobile: passwordLoginForm.Mobile}); err != nil {
 		if e, ok := status.FromError(err); ok {
 			switch e.Code() {
@@ -169,7 +122,7 @@ func PasswordLogin(c *gin.Context) {
 		}
 	} else {
 		//查询号码没问题,检查密码;注意rsp中已经取得了哈希过的密码
-		if _, passErr := userSrvClient.CheckPassWord(c, &proto.CheckPasswordInfo{
+		if _, passErr := global.UserSrvClient.CheckPassWord(c, &proto.CheckPasswordInfo{
 			Password: passwordLoginForm.Password, EncryptedPassword: rsp.Password}); passErr != nil {
 			if e, ok := status.FromError(passErr); ok {
 				switch e.Code() {
@@ -245,14 +198,8 @@ func Register(c *gin.Context) {
 	}
 
 	//3.创建用户
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", global.ServerConfig.UserSrvInfo.Host, global.ServerConfig.UserSrvInfo.Port),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		zap.S().Errorw("[Register]连接用户服务失败", "msg", err.Error())
-		return
-	}
-	userSrvClient := proto.NewUserClient(userConn)
-	user, err := userSrvClient.CreateUser(context.Background(), &proto.CreateUserInfo{
+
+	user, err := global.UserSrvClient.CreateUser(context.Background(), &proto.CreateUserInfo{
 		NickName: registerForm.Mobile, //默认nickname为电话
 		Password: registerForm.Password,
 		Mobile:   registerForm.Mobile,

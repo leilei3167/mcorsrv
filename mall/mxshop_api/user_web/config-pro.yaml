@@ -1,18 +1,8 @@
-name: 'user-web'
-port: 8021
-user_srv:
-  host: '127.0.0.1'
-  port: 50051
-  name: 'user-srv'
-jwt:
-  key: 'hellwoddsacxzcxzwq'
-sms:
-  key: 'LTAI5tEsjQGq12fFoGEF5yz6'
-  secret: 'q2a1UCOXoD71fw0ANM99PxgPcFYPIZ'
-redis:
-  host: '127.0.0.1'
-  port: 6379
-  expire: 600
-consul:
-    host: '127.0.0.1'
-    port: '5050'
+# nacos的配置
+host: '127.0.0.1'
+port: 8848
+namespace: 'ca8efd83-99bc-40de-8fad-f664750c0071'
+user: 'nacos'
+password: 'nacos'
+dataid: 'user-web.json'
+group: 'pro'

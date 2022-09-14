@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"user_api/user_web/global"
 	"user_api/user_web/initialize"
+	"user_api/user_web/utils"
 	myvalidator "user_api/user_web/validator"
 
 	"github.com/gin-gonic/gin/binding"
@@ -25,6 +27,19 @@ func main() {
 	err := initialize.InitTrans("zh")
 	if err != nil {
 		panic(err)
+	}
+	//5.初始化srv的连接
+	initialize.InitSrvConn()
+
+	//6.动态获取端口号
+	viper.AutomaticEnv()
+	//如果是本地开发环境端口号固定，线上环境启动获取端口号
+	release := viper.GetBool("MXSHOP_DEBUG")
+	if release { //上线使用动态port
+		port, err := utils.GetFreePort()
+		if err == nil {
+			global.ServerConfig.Port = port //修改
+		}
 	}
 
 	//注册自定义字段验证,以及注册翻译
