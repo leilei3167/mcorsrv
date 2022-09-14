@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"mxshop_srv/user_srv/model"
+	"mxshop_srv/user_srv/pkg/password"
 	"os"
 	"time"
-	"user_srv/user_srv/model"
-	"user_srv/user_srv/pkg/password"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

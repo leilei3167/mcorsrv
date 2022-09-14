@@ -9,7 +9,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"mxshop_srv/user_srv/global"
+	"mxshop_srv/goods_srv/global"
 )
 
 func GetEnvInfo(env string) bool {

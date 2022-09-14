@@ -3,8 +3,8 @@ package initialize
 import (
 	"fmt"
 	"log"
-	"mxshop_srv/user_srv/global"
-	"mxshop_srv/user_srv/model"
+	"mxshop_srv/goods_srv/global"
+	"mxshop_srv/goods_srv/model"
 	"os"
 	"time"
 

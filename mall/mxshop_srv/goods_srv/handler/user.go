@@ -3,10 +3,10 @@ package handler
 import (
 	"context"
 	"errors"
-	"mxshop_srv/user_srv/global"
-	"mxshop_srv/user_srv/model"
-	"mxshop_srv/user_srv/pkg/password"
-	"mxshop_srv/user_srv/proto"
+	"mxshop_srv/goods_srv/global"
+	"mxshop_srv/goods_srv/model"
+	"mxshop_srv/goods_srv/pkg/password"
+	"mxshop_srv/goods_srv/proto"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"

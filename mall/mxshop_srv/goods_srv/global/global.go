@@ -1,12 +1,12 @@
-package initialize
+package global
 
 import (
-	"fmt"
 	"log"
-	"mxshop_srv/user_srv/global"
-	"mxshop_srv/user_srv/model"
 	"os"
 	"time"
+
+	"mxshop_srv/goods_srv/config"
+	"mxshop_srv/goods_srv/model"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -14,11 +14,16 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-func InitDB() {
+var (
+	// DB 全局的数据库实例,handler层直接依赖,应该考虑解耦,方便后期更换数据库
+	DB           *gorm.DB
+	ServerConfig *config.ServerConfig
+	NacosConfig  = &config.NacosConfig{}
+)
+
+func init() {
 	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取dsn详情
-	c := global.ServerConfig.MysqlInfo
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		c.User, c.Password, c.Host, c.Port, c.Name)
+	dsn := "root:123456@tcp(127.0.0.1:3306)/mxshop_goods_srv?charset=utf8mb4&parseTime=True&loc=Local"
 
 	//定义全局的sql,这样能够将某些慢sql打印出来,便于debug
 	newLogger := logger.New(
@@ -31,7 +36,7 @@ func InitDB() {
 		},
 	)
 	var err error
-	global.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:         newLogger,
 		NamingStrategy: schema.NamingStrategy{SingularTable: true}, //单数命名表
 	})
@@ -39,5 +44,5 @@ func InitDB() {
 		panic(err)
 	}
 
-	_ = global.DB.AutoMigrate(&model.User{})
+	_ = DB.AutoMigrate(&model.User{})
 }

@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"user_srv/user_srv/config"
-	"user_srv/user_srv/model"
+	"mxshop_srv/user_srv/config"
+	"mxshop_srv/user_srv/model"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -18,6 +18,7 @@ var (
 	// DB 全局的数据库实例,handler层直接依赖,应该考虑解耦,方便后期更换数据库
 	DB           *gorm.DB
 	ServerConfig *config.ServerConfig
+	NacosConfig  = &config.NacosConfig{}
 )
 
 func init() {

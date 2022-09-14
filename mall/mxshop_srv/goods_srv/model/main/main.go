@@ -1,10 +1,8 @@
-package initialize
+package main
 
 import (
-	"fmt"
 	"log"
-	"mxshop_srv/user_srv/global"
-	"mxshop_srv/user_srv/model"
+	"mxshop_srv/goods_srv/model"
 	"os"
 	"time"
 
@@ -14,11 +12,10 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-func InitDB() {
+func main() {
+
 	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取dsn详情
-	c := global.ServerConfig.MysqlInfo
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		c.User, c.Password, c.Host, c.Port, c.Name)
+	dsn := "root:123456@tcp(127.0.0.1:3306)/mxshop_goods_srv?charset=utf8mb4&parseTime=True&loc=Local"
 
 	//定义全局的sql,这样能够将某些慢sql打印出来,便于debug
 	newLogger := logger.New(
@@ -30,14 +27,17 @@ func InitDB() {
 			Colorful:                  true,        // 禁用彩色打印
 		},
 	)
-	var err error
-	global.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:         newLogger,
 		NamingStrategy: schema.NamingStrategy{SingularTable: true}, //单数命名表
 	})
 	if err != nil {
 		panic(err)
 	}
+	err = db.AutoMigrate(&model.Category{}, &model.Brands{}, &model.Banner{}, &model.GoodsCategoryBrand{}, &model.Goods{})
+	if err != nil {
+		panic(err)
+	}
 
-	_ = global.DB.AutoMigrate(&model.User{})
 }
