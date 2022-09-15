@@ -26,6 +26,7 @@ type GoodsClient interface {
 	//商品接口
 	GoodsList(ctx context.Context, in *GoodsFilterRequest, opts ...grpc.CallOption) (*GoodsListResponse, error)
 	//现在用户提交订单有多个商品，你得批量查询商品的信息吧
+	//批量获取商品信息,如在购物车(20个不同的商品)中批量下单(订单微服务就会调用此接口),那么中间就有个过程,批量的查询这些商品信息
 	BatchGetGoods(ctx context.Context, in *BatchGoodsIdInfo, opts ...grpc.CallOption) (*GoodsListResponse, error)
 	CreateGoods(ctx context.Context, in *CreateGoodsInfo, opts ...grpc.CallOption) (*GoodsInfoResponse, error)
 	DeleteGoods(ctx context.Context, in *DeleteGoodsInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -288,6 +289,7 @@ type GoodsServer interface {
 	//商品接口
 	GoodsList(context.Context, *GoodsFilterRequest) (*GoodsListResponse, error)
 	//现在用户提交订单有多个商品，你得批量查询商品的信息吧
+	//批量获取商品信息,如在购物车(20个不同的商品)中批量下单(订单微服务就会调用此接口),那么中间就有个过程,批量的查询这些商品信息
 	BatchGetGoods(context.Context, *BatchGoodsIdInfo) (*GoodsListResponse, error)
 	CreateGoods(context.Context, *CreateGoodsInfo) (*GoodsInfoResponse, error)
 	DeleteGoods(context.Context, *DeleteGoodsInfo) (*emptypb.Empty, error)

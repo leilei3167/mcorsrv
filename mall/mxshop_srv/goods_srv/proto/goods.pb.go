@@ -405,8 +405,8 @@ type SubCategoryListResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	Total        int32                   `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
-	Info         *CategoryInfoResponse   `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`
-	SubCategorys []*CategoryInfoResponse `protobuf:"bytes,3,rep,name=subCategorys,proto3" json:"subCategorys,omitempty"`
+	Info         *CategoryInfoResponse   `protobuf:"bytes,2,opt,name=info,proto3" json:"info,omitempty"`                 //当前分类的信息
+	SubCategorys []*CategoryInfoResponse `protobuf:"bytes,3,rep,name=subCategorys,proto3" json:"subCategorys,omitempty"` //这个子分类的信息,一对多
 }
 
 func (x *SubCategoryListResponse) Reset() {
@@ -635,6 +635,7 @@ func (x *CategoryBrandRequest) GetBrandId() int32 {
 	return 0
 }
 
+//品牌和分类的多对多的关系
 type CategoryBrandResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1395,7 +1396,7 @@ type GoodInfoRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id int32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id int32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"` //使用商品主键查询,如果后期有需求可拓展
 }
 
 func (x *GoodInfoRequest) Reset() {
@@ -1445,7 +1446,7 @@ type CreateGoodsInfo struct {
 	Id              int32    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name            string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	GoodsSn         string   `protobuf:"bytes,3,opt,name=goodsSn,proto3" json:"goodsSn,omitempty"`
-	Stocks          int32    `protobuf:"varint,7,opt,name=stocks,proto3" json:"stocks,omitempty"` //库存，
+	Stocks          int32    `protobuf:"varint,7,opt,name=stocks,proto3" json:"stocks,omitempty"` //库存，库存会是一个独立的微服务
 	MarketPrice     float32  `protobuf:"fixed32,8,opt,name=marketPrice,proto3" json:"marketPrice,omitempty"`
 	ShopPrice       float32  `protobuf:"fixed32,9,opt,name=shopPrice,proto3" json:"shopPrice,omitempty"`
 	GoodsBrief      string   `protobuf:"bytes,10,opt,name=goodsBrief,proto3" json:"goodsBrief,omitempty"`
@@ -1730,21 +1731,28 @@ func (x *BatchCategoryInfoRequest) GetBrandNums() int32 {
 	return 0
 }
 
+//定义商品过滤的条件
 type GoodsFilterRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PriceMin    int32  `protobuf:"varint,1,opt,name=priceMin,proto3" json:"priceMin,omitempty"`
-	PriceMax    int32  `protobuf:"varint,2,opt,name=priceMax,proto3" json:"priceMax,omitempty"`
-	IsHot       bool   `protobuf:"varint,3,opt,name=isHot,proto3" json:"isHot,omitempty"`
-	IsNew       bool   `protobuf:"varint,4,opt,name=isNew,proto3" json:"isNew,omitempty"`
-	IsTab       bool   `protobuf:"varint,5,opt,name=isTab,proto3" json:"isTab,omitempty"`
-	TopCategory int32  `protobuf:"varint,6,opt,name=topCategory,proto3" json:"topCategory,omitempty"`
-	Pages       int32  `protobuf:"varint,7,opt,name=pages,proto3" json:"pages,omitempty"`
-	PagePerNums int32  `protobuf:"varint,8,opt,name=pagePerNums,proto3" json:"pagePerNums,omitempty"`
-	KeyWords    string `protobuf:"bytes,9,opt,name=keyWords,proto3" json:"keyWords,omitempty"`
-	Brand       int32  `protobuf:"varint,10,opt,name=brand,proto3" json:"brand,omitempty"`
+	//价格区间过滤
+	PriceMin int32 `protobuf:"varint,1,opt,name=priceMin,proto3" json:"priceMin,omitempty"`
+	PriceMax int32 `protobuf:"varint,2,opt,name=priceMax,proto3" json:"priceMax,omitempty"`
+	//是否畅销 是否新品 是否在tab页面
+	IsHot bool `protobuf:"varint,3,opt,name=isHot,proto3" json:"isHot,omitempty"`
+	IsNew bool `protobuf:"varint,4,opt,name=isNew,proto3" json:"isNew,omitempty"`
+	IsTab bool `protobuf:"varint,5,opt,name=isTab,proto3" json:"isTab,omitempty"`
+	//根据商品分类过滤(根据一级,二级,三级类目列出商品)
+	TopCategory int32 `protobuf:"varint,6,opt,name=topCategory,proto3" json:"topCategory,omitempty"`
+	//分页
+	Pages       int32 `protobuf:"varint,7,opt,name=pages,proto3" json:"pages,omitempty"`
+	PagePerNums int32 `protobuf:"varint,8,opt,name=pagePerNums,proto3" json:"pagePerNums,omitempty"`
+	//关键词查询,后续用es实现
+	KeyWords string `protobuf:"bytes,9,opt,name=keyWords,proto3" json:"keyWords,omitempty"`
+	//根据品牌过滤商品
+	Brand int32 `protobuf:"varint,10,opt,name=brand,proto3" json:"brand,omitempty"`
 }
 
 func (x *GoodsFilterRequest) Reset() {
@@ -1849,32 +1857,34 @@ func (x *GoodsFilterRequest) GetBrand() int32 {
 	return 0
 }
 
+//和商品的model几乎一致
 type GoodsInfoResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              int32                      `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	CategoryId      int32                      `protobuf:"varint,2,opt,name=categoryId,proto3" json:"categoryId,omitempty"`
-	Name            string                     `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	GoodsSn         string                     `protobuf:"bytes,4,opt,name=goodsSn,proto3" json:"goodsSn,omitempty"`
-	ClickNum        int32                      `protobuf:"varint,5,opt,name=clickNum,proto3" json:"clickNum,omitempty"`
-	SoldNum         int32                      `protobuf:"varint,6,opt,name=soldNum,proto3" json:"soldNum,omitempty"`
-	FavNum          int32                      `protobuf:"varint,7,opt,name=favNum,proto3" json:"favNum,omitempty"`
-	MarketPrice     float32                    `protobuf:"fixed32,9,opt,name=marketPrice,proto3" json:"marketPrice,omitempty"`
-	ShopPrice       float32                    `protobuf:"fixed32,10,opt,name=shopPrice,proto3" json:"shopPrice,omitempty"`
-	GoodsBrief      string                     `protobuf:"bytes,11,opt,name=goodsBrief,proto3" json:"goodsBrief,omitempty"`
-	GoodsDesc       string                     `protobuf:"bytes,12,opt,name=goodsDesc,proto3" json:"goodsDesc,omitempty"`
-	ShipFree        bool                       `protobuf:"varint,13,opt,name=shipFree,proto3" json:"shipFree,omitempty"`
-	Images          []string                   `protobuf:"bytes,14,rep,name=images,proto3" json:"images,omitempty"`
-	DescImages      []string                   `protobuf:"bytes,15,rep,name=descImages,proto3" json:"descImages,omitempty"`
-	GoodsFrontImage string                     `protobuf:"bytes,16,opt,name=goodsFrontImage,proto3" json:"goodsFrontImage,omitempty"`
-	IsNew           bool                       `protobuf:"varint,17,opt,name=isNew,proto3" json:"isNew,omitempty"`
-	IsHot           bool                       `protobuf:"varint,18,opt,name=isHot,proto3" json:"isHot,omitempty"`
-	OnSale          bool                       `protobuf:"varint,19,opt,name=onSale,proto3" json:"onSale,omitempty"`
-	AddTime         int64                      `protobuf:"varint,20,opt,name=addTime,proto3" json:"addTime,omitempty"`
-	Category        *CategoryBriefInfoResponse `protobuf:"bytes,21,opt,name=category,proto3" json:"category,omitempty"`
-	Brand           *BrandInfoResponse         `protobuf:"bytes,22,opt,name=brand,proto3" json:"brand,omitempty"`
+	Id              int32    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                 //该商品的主键
+	CategoryId      int32    `protobuf:"varint,2,opt,name=categoryId,proto3" json:"categoryId,omitempty"` //分类的主键
+	Name            string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	GoodsSn         string   `protobuf:"bytes,4,opt,name=goodsSn,proto3" json:"goodsSn,omitempty"`
+	ClickNum        int32    `protobuf:"varint,5,opt,name=clickNum,proto3" json:"clickNum,omitempty"`
+	SoldNum         int32    `protobuf:"varint,6,opt,name=soldNum,proto3" json:"soldNum,omitempty"`
+	FavNum          int32    `protobuf:"varint,7,opt,name=favNum,proto3" json:"favNum,omitempty"`
+	MarketPrice     float32  `protobuf:"fixed32,9,opt,name=marketPrice,proto3" json:"marketPrice,omitempty"`
+	ShopPrice       float32  `protobuf:"fixed32,10,opt,name=shopPrice,proto3" json:"shopPrice,omitempty"`
+	GoodsBrief      string   `protobuf:"bytes,11,opt,name=goodsBrief,proto3" json:"goodsBrief,omitempty"` //简介
+	GoodsDesc       string   `protobuf:"bytes,12,opt,name=goodsDesc,proto3" json:"goodsDesc,omitempty"`   //详细描述
+	ShipFree        bool     `protobuf:"varint,13,opt,name=shipFree,proto3" json:"shipFree,omitempty"`    //包邮
+	Images          []string `protobuf:"bytes,14,rep,name=images,proto3" json:"images,omitempty"`         //[]images
+	DescImages      []string `protobuf:"bytes,15,rep,name=descImages,proto3" json:"descImages,omitempty"` //[]descImages
+	GoodsFrontImage string   `protobuf:"bytes,16,opt,name=goodsFrontImage,proto3" json:"goodsFrontImage,omitempty"`
+	IsNew           bool     `protobuf:"varint,17,opt,name=isNew,proto3" json:"isNew,omitempty"`
+	IsHot           bool     `protobuf:"varint,18,opt,name=isHot,proto3" json:"isHot,omitempty"`
+	OnSale          bool     `protobuf:"varint,19,opt,name=onSale,proto3" json:"onSale,omitempty"`
+	AddTime         int64    `protobuf:"varint,20,opt,name=addTime,proto3" json:"addTime,omitempty"`
+	//因为涉及到分类表,和品牌表,包含一个其分类和品牌的简单信息(需要详细的可以增加字段)
+	Category *CategoryBriefInfoResponse `protobuf:"bytes,21,opt,name=category,proto3" json:"category,omitempty"`
+	Brand    *BrandInfoResponse         `protobuf:"bytes,22,opt,name=brand,proto3" json:"brand,omitempty"`
 }
 
 func (x *GoodsInfoResponse) Reset() {
@@ -2061,8 +2071,8 @@ type GoodsListResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Total int32                `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
-	Data  []*GoodsInfoResponse `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"`
+	Total int32                `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"` //总数,返回列表时一般都会包含一个总数
+	Data  []*GoodsInfoResponse `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"`    //[]GoodsInfoResponse
 }
 
 func (x *GoodsListResponse) Reset() {

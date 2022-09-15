@@ -20,10 +20,8 @@ import (
 	"syscall"
 )
 
-var host = "172.30.90.215"
-
 func main() {
-	IP := flag.String("ip", "0.0.0.0", "ip地址")
+
 	Port := flag.Int("p", 0, "端口")
 	flag.Parse()
 	if *Port == 0 { //如果未指定监听端口,则随机选一个
@@ -42,7 +40,8 @@ func main() {
 
 	s := grpc.NewServer()
 	proto.RegisterUserServer(s, &handler.UserServer{})
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *IP, *Port))
+	host := global.ServerConfig.Host
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, *Port))
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +73,7 @@ func main() {
 	registration.Name = global.ServerConfig.Name //注册的服务名字
 	registration.ID = serviceID                  //注册到consul时要保证id不同,同名又同id的服务将会被覆盖
 	registration.Port = *Port
-	registration.Tags = []string{"leilei", "user", "srv"}
+	registration.Tags = global.ServerConfig.Tags
 	registration.Address = host
 	registration.Check = check
 

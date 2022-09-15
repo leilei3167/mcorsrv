@@ -5,13 +5,11 @@ import (
 	"os"
 	"time"
 
-	"mxshop_srv/goods_srv/config"
-	"mxshop_srv/goods_srv/model"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
+	"mxshop_srv/goods_srv/config"
 )
 
 var (
@@ -44,5 +42,5 @@ func init() {
 		panic(err)
 	}
 
-	_ = DB.AutoMigrate(&model.User{})
+	//_ = DB.AutoMigrate(&model.User{})
 }

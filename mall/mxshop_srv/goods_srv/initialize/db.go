@@ -39,5 +39,8 @@ func InitDB() {
 		panic(err)
 	}
 
-	_ = global.DB.AutoMigrate(&model.User{})
+	err = global.DB.AutoMigrate(&model.Category{}, &model.Brands{}, &model.Banner{}, &model.GoodsCategoryBrand{}, &model.Goods{})
+	if err != nil {
+		panic(err)
+	}
 }
