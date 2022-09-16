@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"mxshop_srv/goods_srv/global"
-	"mxshop_srv/goods_srv/model"
 	"os"
 	"time"
 
@@ -39,8 +38,8 @@ func InitDB() {
 		panic(err)
 	}
 
-	err = global.DB.AutoMigrate(&model.Category{}, &model.Brands{}, &model.Banner{}, &model.GoodsCategoryBrand{}, &model.Goods{})
-	if err != nil {
-		panic(err)
-	}
+	/*	err = global.DB.AutoMigrate(&model.Category{}, &model.Brands{}, &model.Banner{}, &model.GoodsCategoryBrand{}, &model.Goods{})
+		if err != nil {
+			panic(err)
+		}*/
 }
