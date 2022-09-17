@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	Port := flag.Int("p", 0, "端口")
+	Port := flag.Int("p", 50051, "端口")
 	flag.Parse()
 	if *Port == 0 { //如果未指定监听端口,则随机选一个
 		p, err := utils.GetFreePort()

@@ -42,5 +42,4 @@ func init() {
 		panic(err)
 	}
 
-	//_ = DB.AutoMigrate(&model.User{})
 }
