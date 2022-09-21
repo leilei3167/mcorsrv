@@ -1,0 +1,260 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+option go_package = ".;proto";
+
+service Goods{
+  //商品接口
+  rpc GoodsList(GoodsFilterRequest) returns(GoodsListResponse);//过滤条件查询商品信息,返回列表
+  //现在用户提交订单有多个商品，你得批量查询商品的信息吧
+  //批量获取商品信息,如在购物车(20个不同的商品)中批量下单(订单微服务就会调用此接口),那么中间就有个过程,批量的查询这些商品信息
+  rpc BatchGetGoods(BatchGoodsIdInfo) returns(GoodsListResponse);//根据 []id 批量查询
+  rpc CreateGoods(CreateGoodsInfo) returns (GoodsInfoResponse);
+  rpc DeleteGoods(DeleteGoodsInfo) returns (google.protobuf.Empty);//删除更新一般无返回值
+  rpc UpdateGoods(CreateGoodsInfo) returns (google.protobuf.Empty);//更新所需的字段和创建一致
+  rpc GetGoodsDetail(GoodInfoRequest) returns(GoodsInfoResponse); //获取商品详情
+
+  //商品分类
+  rpc GetAllCategorysList(google.protobuf.Empty) returns(CategoryListResponse); //获取所有的分类;首页要展示所有的分类;注意没有参数
+  //获取子分类
+  rpc GetSubCategory(CategoryListRequest) returns(SubCategoryListResponse);//查询某个分类,要展示其所有的子分类
+  rpc CreateCategory(CategoryInfoRequest) returns(CategoryInfoResponse); //新建分类信息
+  rpc DeleteCategory(DeleteCategoryRequest) returns(google.protobuf.Empty); //删除分类
+  rpc UpdateCategory(CategoryInfoRequest) returns(google.protobuf.Empty); //修改分类信息
+
+  //品牌和轮播图
+  rpc BrandList(BrandFilterRequest) returns(BrandListResponse); //列表,分页显示
+  rpc CreateBrand(BrandRequest) returns(BrandInfoResponse); //新建品牌信息
+  rpc DeleteBrand(BrandRequest) returns(google.protobuf.Empty); //删除品牌
+  rpc UpdateBrand(BrandRequest) returns(google.protobuf.Empty); //修改品牌信息
+
+  //轮播图
+  rpc BannerList(google.protobuf.Empty) returns(BannerListResponse); //获取轮播列表信息
+  rpc CreateBanner(BannerRequest) returns(BannerResponse); //添加banner图
+  rpc DeleteBanner(BannerRequest) returns(google.protobuf.Empty); //删除轮播图
+  rpc UpdateBanner(BannerRequest) returns(google.protobuf.Empty); //修改轮播图
+
+  //品牌分类
+  rpc CategoryBrandList(CategoryBrandFilterRequest) returns(CategoryBrandListResponse); //获取轮播列表信息
+  //通过category获取brands
+  rpc GetCategoryBrandList(CategoryInfoRequest) returns(BrandListResponse);//通过分类,获取所有的品牌
+  rpc CreateCategoryBrand(CategoryBrandRequest) returns(CategoryBrandResponse); //添加banner图
+  rpc DeleteCategoryBrand(CategoryBrandRequest) returns(google.protobuf.Empty); //删除轮播图
+  rpc UpdateCategoryBrand(CategoryBrandRequest) returns(google.protobuf.Empty); //修改轮播图
+}
+
+message CategoryListRequest {
+  int32 id = 1;
+  int32 level = 2;
+}
+
+message CategoryInfoRequest {
+  int32 id = 1;
+  string name = 2;
+  int32 parentCategory = 3;
+  int32 level = 4;
+  bool isTab = 5;
+}
+
+message DeleteCategoryRequest {
+  int32 id = 1;
+}
+
+message QueryCategoryRequest {
+  int32 id = 1;
+  string name = 2;
+}
+
+message CategoryInfoResponse {
+  int32 id = 1;
+  string name = 2;
+  int32 parentCategory = 3;
+  int32 level = 4;
+  bool isTab = 5;
+}
+
+message CategoryListResponse {
+  int32 total = 1;
+  repeated CategoryInfoResponse data = 2;
+  string jsonData = 3;
+}
+
+message SubCategoryListResponse {
+  int32 total = 1;
+  CategoryInfoResponse info = 2; //当前分类的信息
+  repeated CategoryInfoResponse subCategorys = 3; //这个子分类的信息,一对多
+}
+
+message CategoryBrandFilterRequest  {
+  int32 pages = 1;
+  int32 pagePerNums = 2;
+}
+
+message FilterRequest  {
+  int32 pages = 1;
+  int32 pagePerNums = 2;
+}
+
+message CategoryBrandRequest{
+  int32 id = 1;
+  int32 categoryId = 2;
+  int32 brandId = 3;
+}
+//品牌和分类的多对多的关系
+message CategoryBrandResponse{
+  int32 id = 1;
+  BrandInfoResponse brand = 2;
+  CategoryInfoResponse category = 3;
+}
+
+message BannerRequest {
+  int32 id = 1;
+  int32 index = 2;
+  string image = 3;
+  string url = 4;
+}
+
+message BannerResponse {
+  int32 id = 1;
+  int32 index = 2;
+  string image = 3;
+  string url = 4;
+}
+
+message BrandFilterRequest {
+  int32 pages = 1;
+  int32 pagePerNums = 2;
+}
+
+message BrandRequest {
+  int32 id = 1;
+  string name = 2;
+  string logo = 3;
+}
+
+message BrandInfoResponse {
+  int32 id = 1;
+  string name = 2;
+  string logo = 3;
+}
+
+message BrandListResponse {
+  int32 total = 1;
+  repeated BrandInfoResponse data = 2;
+}
+
+message BannerListResponse {
+  int32 total = 1;
+  repeated BannerResponse data = 2;
+}
+
+message CategoryBrandListResponse {
+  int32 total = 1;
+  repeated CategoryBrandResponse data = 2;
+}
+
+
+
+message BatchGoodsIdInfo {
+  repeated int32 id = 1;
+}
+
+
+message DeleteGoodsInfo {
+  int32 id = 1;
+}
+
+message CategoryBriefInfoResponse {
+  int32 id = 1;
+  string name = 2;
+}
+
+message CategoryFilterRequest {
+  int32 id = 1;
+  bool  isTab = 2;
+}
+
+message GoodInfoRequest {
+  int32 id = 1; //使用商品主键查询,如果后期有需求可拓展
+}
+
+message CreateGoodsInfo {
+  int32 id = 1;
+  string name = 2;
+  string goodsSn = 3;
+  int32 stocks = 7; //库存，库存会是一个独立的微服务
+  float marketPrice = 8;
+  float shopPrice = 9;
+  string goodsBrief = 10;
+  string goodsDesc = 11;
+  bool shipFree = 12;
+  repeated string images = 13;
+  repeated string descImages = 14;
+  string goodsFrontImage = 15;
+  bool isNew = 16;
+  bool isHot = 17;
+  bool onSale = 18;
+  int32 categoryId = 19;
+  int32 brandId = 20;
+}
+
+message GoodsReduceRequest {
+  int32 GoodsId = 1;
+  int32 nums = 2;
+}
+
+message BatchCategoryInfoRequest {
+  repeated int32 id = 1;
+  int32 goodsNums = 2;
+  int32 brandNums = 3;
+}
+//定义商品过滤的条件
+message GoodsFilterRequest  {
+  //价格区间过滤
+  int32 priceMin = 1;
+  int32 priceMax = 2;
+//是否畅销 是否新品 是否在tab页面
+  bool  isHot = 3;
+  bool  isNew = 4;
+  bool  isTab = 5;
+//根据商品分类过滤(根据一级,二级,三级类目列出商品)
+  int32 topCategory = 6;
+  //分页
+  int32 pages = 7;
+  int32 pagePerNums = 8;
+  //关键词查询,后续用es实现
+  string keyWords = 9;
+  //根据品牌过滤商品
+  int32 brand = 10;
+}
+
+//和商品的model几乎一致
+message GoodsInfoResponse {
+  int32 id = 1; //该商品的主键
+  int32 categoryId = 2; //分类的主键
+  string name = 3;
+  string goodsSn = 4;
+  int32 clickNum = 5;
+  int32 soldNum = 6;
+  int32 favNum = 7;
+  float marketPrice = 9;
+  float shopPrice = 10;
+  string goodsBrief = 11; //简介
+  string goodsDesc = 12; //详细描述
+  bool shipFree = 13; //包邮
+  repeated string images = 14; //[]images
+  repeated string descImages = 15;//[]descImages
+  string goodsFrontImage = 16;
+  bool isNew = 17;
+  bool isHot = 18;
+  bool onSale = 19;
+  int64 addTime = 20;
+  //因为涉及到分类表,和品牌表,包含一个其分类和品牌的简单信息(需要详细的可以增加字段)
+  CategoryBriefInfoResponse category = 21;
+  BrandInfoResponse brand = 22;
+}
+
+message GoodsListResponse {
+  int32 total = 1; //总数,返回列表时一般都会包含一个总数
+  repeated GoodsInfoResponse data = 2; //[]GoodsInfoResponse
+}

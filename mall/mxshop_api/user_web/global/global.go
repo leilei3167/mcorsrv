@@ -1,8 +1,8 @@
 package global
 
 import (
-	"user_api/user_web/config"
-	"user_api/user_web/proto"
+	"mxshop_api/user_web/config"
+	"mxshop_api/user_web/proto"
 
 	ut "github.com/go-playground/universal-translator"
 )

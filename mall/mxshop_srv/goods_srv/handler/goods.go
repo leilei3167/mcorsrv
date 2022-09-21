@@ -3,13 +3,14 @@ package handler
 import (
 	"context"
 	"fmt"
+	"mxshop_srv/goods_srv/global"
+	"mxshop_srv/goods_srv/model"
+	"mxshop_srv/goods_srv/proto"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
-	"mxshop_srv/goods_srv/global"
-	"mxshop_srv/goods_srv/model"
-	"mxshop_srv/goods_srv/proto"
 )
 
 type GoodsServer struct {
@@ -90,7 +91,7 @@ func (g *GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterReque
 	}
 
 	if req.Brand > 0 {
-		localDB = localDB.Where("brand_id = ?", req.Brand)
+		localDB = localDB.Where("brands_id = ?", req.Brand)
 	}
 
 	//通过category设置查找条件;当设置为1级分类时,需要查询2,3级下的商品,用到子查询即可

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"mxshop_api/user_web/models"
+	"mxshop_api/goods_web/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

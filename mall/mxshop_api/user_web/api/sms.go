@@ -3,19 +3,19 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v9"
-	"go.uber.org/zap"
 	"math/rand"
+	"mxshop_api/user_web/forms"
+	"mxshop_api/user_web/global"
 	"net/http"
 	"strings"
 	"time"
-	"user_api/user_web/forms"
-	"user_api/user_web/global"
-)
-import (
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v9"
+	"go.uber.org/zap"
+
 	dysmsapi "github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
 )
 

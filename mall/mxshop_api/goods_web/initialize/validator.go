@@ -2,7 +2,7 @@ package initialize
 
 import (
 	"fmt"
-	"mxshop_api/user_web/global"
+	"mxshop_api/goods_web/global"
 	"reflect"
 	"strings"
 

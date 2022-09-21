@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"mxshop_api/user_web/global"
-	"mxshop_api/user_web/initialize"
-	"mxshop_api/user_web/utils"
-	myvalidator "mxshop_api/user_web/validator"
+	"mxshop_api/goods_web/global"
+	"mxshop_api/goods_web/initialize"
+	"mxshop_api/goods_web/utils"
+	myvalidator "mxshop_api/goods_web/validator"
 
 	"github.com/spf13/viper"
 

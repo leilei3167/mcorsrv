@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"errors"
-	"mxshop_api/user_web/global"
-	"mxshop_api/user_web/models"
+	"mxshop_api/goods_web/global"
+	"mxshop_api/goods_web/models"
 	"net/http"
 	"time"
 

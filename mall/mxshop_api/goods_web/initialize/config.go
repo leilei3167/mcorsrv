@@ -3,7 +3,7 @@ package initialize
 import (
 	"encoding/json"
 	"fmt"
-	"mxshop_api/user_web/global"
+	"mxshop_api/goods_web/global"
 
 	"github.com/spf13/viper"
 
@@ -38,14 +38,6 @@ func InitConfig() {
 		panic(err)
 	}
 	zap.S().Debugf("nacos配置信息:%#v", global.NacosConfig)
-
-	/*	v.WatchConfig()
-		v.OnConfigChange(func(e fsnotify.Event) {
-			zap.S().Info("配置文件产生变化: %v", e.Name)
-			_ = v.ReadInConfig()
-			_ = v.Unmarshal(global.ServerConfig)
-			zap.S().Infof("变更后的配置信息: %v", global.ServerConfig)
-		})*/
 
 	//从nacos中读取配置信息
 	sc := []constant.ServerConfig{

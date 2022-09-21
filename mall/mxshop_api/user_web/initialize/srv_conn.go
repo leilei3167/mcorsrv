@@ -2,13 +2,14 @@ package initialize
 
 import (
 	"fmt"
+	"mxshop_api/user_web/global"
+	"mxshop_api/user_web/proto"
+
 	"github.com/hashicorp/consul/api"
 	_ "github.com/mbobakov/grpc-consul-resolver" // It's important
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"user_api/user_web/global"
-	"user_api/user_web/proto"
 )
 
 func InitSrvConn() {
