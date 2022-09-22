@@ -9,8 +9,8 @@ type MysqlConfig struct {
 }
 
 type ServerConfig struct {
-	Name string   `mapstructure:"name" json:"name"` //给consul使用
-	Host string   `mapstructure:"host" json:"host"` //给consul使用
+	Name string   `mapstructure:"name" json:"name"` // 给consul使用
+	Host string   `mapstructure:"host" json:"host"` // 给consul使用
 	Tags []string `mapstructure:"tags" json:"tags"`
 
 	MysqlInfo  MysqlConfig  `mapstructure:"mysql" json:"mysql"`

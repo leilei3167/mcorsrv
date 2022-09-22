@@ -2,21 +2,23 @@ package handler
 
 import (
 	"context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
+
 	"mxshop_srv/goods_srv/global"
 	"mxshop_srv/goods_srv/model"
 	"mxshop_srv/goods_srv/proto"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (g *GoodsServer) BannerList(ctx context.Context, empty *emptypb.Empty) (*proto.BannerListResponse, error) {
 	rsp := proto.BannerListResponse{}
 	var banners []model.Banner
-	result := global.DB.Find(&banners)     //结果写入[]model.Banner中
-	rsp.Total = int32(result.RowsAffected) //检查总数
+	result := global.DB.Find(&banners)     // 结果写入[]model.Banner中
+	rsp.Total = int32(result.RowsAffected) // 检查总数
 
-	var bannerRsp []*proto.BannerResponse //将model转换为proto定义的数据结构
+	var bannerRsp []*proto.BannerResponse // 将model转换为proto定义的数据结构
 	for _, banner := range banners {
 		bannerRsp = append(bannerRsp, &proto.BannerResponse{
 			Id:    banner.ID,
@@ -31,12 +33,12 @@ func (g *GoodsServer) BannerList(ctx context.Context, empty *emptypb.Empty) (*pr
 }
 
 func (g *GoodsServer) CreateBanner(ctx context.Context, req *proto.BannerRequest) (*proto.BannerResponse, error) {
-	//banner可以重名
+	// banner可以重名
 	banner := model.Banner{Image: req.Image, Index: req.Index, Url: req.Url}
 
-	global.DB.Save(&banner) //save当没有主键时创建,有主键时更新
+	global.DB.Save(&banner) // save当没有主键时创建,有主键时更新
 
-	return &proto.BannerResponse{Id: banner.ID}, nil //更新成功返回一个主键
+	return &proto.BannerResponse{Id: banner.ID}, nil // 更新成功返回一个主键
 }
 
 func (g *GoodsServer) DeleteBanner(ctx context.Context, req *proto.BannerRequest) (*emptypb.Empty, error) {
@@ -47,7 +49,7 @@ func (g *GoodsServer) DeleteBanner(ctx context.Context, req *proto.BannerRequest
 }
 
 func (g *GoodsServer) UpdateBanner(ctx context.Context, req *proto.BannerRequest) (*emptypb.Empty, error) {
-	//先查询
+	// 先查询
 	var banner model.Banner
 
 	if result := global.DB.First(&banner, req.Id); result.RowsAffected == 0 {
@@ -65,5 +67,4 @@ func (g *GoodsServer) UpdateBanner(ctx context.Context, req *proto.BannerRequest
 	}
 	global.DB.Save(&banner)
 	return &emptypb.Empty{}, nil
-
 }

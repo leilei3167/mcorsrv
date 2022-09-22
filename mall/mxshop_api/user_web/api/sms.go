@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"mxshop_api/user_web/forms"
-	"mxshop_api/user_web/global"
 	"net/http"
 	"strings"
 	"time"
+
+	"mxshop_api/user_web/forms"
+	"mxshop_api/user_web/global"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
@@ -19,7 +20,7 @@ import (
 	dysmsapi "github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
 )
 
-// SendSms 提供短信验证使用,阿里云自带的sdk,需要验证form表单的问题,如手机号码合法性等
+// SendSms 提供短信验证使用,阿里云自带的sdk,需要验证form表单的问题,如手机号码合法性等.
 func SendSms(c *gin.Context) {
 	sendSmsForm := forms.SendSmsForm{}
 	if err := c.ShouldBind(&sendSmsForm); err != nil {
@@ -56,8 +57,8 @@ func SendSms(c *gin.Context) {
 	}
 	zap.S().Debugf("response is %#v\n", response)
 
-	//以上代码可以发送出短信,需要将发出的验证码保存起来,便于后面来进行验证
-	//一般手机号为key,验证码为value存入redis中
+	// 以上代码可以发送出短信,需要将发出的验证码保存起来,便于后面来进行验证
+	// 一般手机号为key,验证码为value存入redis中
 	rdb := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf("%s:%d", global.ServerConfig.RedisInfo.Host, global.ServerConfig.RedisInfo.Port),
 	})
@@ -66,9 +67,9 @@ func SendSms(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "发送成功"})
 }
 
-// GenerateSmsCode 生成width长度的验证码
+// GenerateSmsCode 生成width长度的验证码.
 func GenerateSmsCode(witdh int) string {
-	//生成width长度的短信验证码
+	// 生成width长度的短信验证码
 
 	numeric := [10]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	r := len(numeric)

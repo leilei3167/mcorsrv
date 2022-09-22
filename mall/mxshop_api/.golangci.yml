@@ -1,0 +1,68 @@
+# 参考https://golangci-lint.run/usage/configuration/#run-configuration
+# 设置执行时的配置,如并发数,是否跳过测试文件,跳过某些目录等等
+run:
+  timeout: 10m
+  modules-download-mode: readonly
+  tests: false # 不检查测试文件
+  # 设置输出的选项,如显示格式等等
+output:
+
+linters:
+  disable-all: true # 设置为全部关闭,只开启我们想要设置的linter
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    # 新增 linter
+    - gofmt
+    - goimports
+    - gofumpt
+    #- goconst 
+    - cyclop # 圈复杂度
+    - godot
+    #- wsl
+    #- errorlint # 强制使用1.13的错误机制
+   # 每个linter的定制化选项
+linters-settings:
+  gofumpt:
+    module-path: mxshop_api # 设置go.mod的项目名称
+    extra-rules: true
+  cyclop:
+    # The maximal code complexity to report.
+    # Default: 10
+    max-complexity: 15
+    # The maximal average package complexity.
+    # If it's higher than 0.0 (float) the check is enabled
+    # Default: 0.0
+    package-average: 0.0
+    # Should ignore tests.
+    # Default: false
+    skip-tests: true
+
+  godot:
+    # Comments to be checked: `declarations`, `toplevel`, or `all`.
+    # Default: declarations
+    scope: toplevel
+    # List of regexps for excluding particular comment lines from check.
+    # Default: []
+    exclude:
+      # Exclude todo and fixme comments.
+      - "^fixme:"
+      - "^todo:"
+      - "^FIXME:"
+      - "^TODO:"
+    # Check that each sentence ends with a period.
+    # Default: true
+    period: true
+    # Check that each sentence starts with a capital letter.
+    # Default: false
+    capital: true
+
+issues:
+
+severity:
+

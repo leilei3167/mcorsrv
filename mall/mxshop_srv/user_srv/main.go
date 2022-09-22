@@ -3,28 +3,29 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"mxshop_srv/user_srv/global"
+	"mxshop_srv/user_srv/handler"
+	"mxshop_srv/user_srv/initialize"
+	"mxshop_srv/user_srv/proto"
+	"mxshop_srv/user_srv/utils"
+
 	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"mxshop_srv/user_srv/global"
-	"mxshop_srv/user_srv/handler"
-	"mxshop_srv/user_srv/initialize"
-	"mxshop_srv/user_srv/proto"
-	"mxshop_srv/user_srv/utils"
-	"net"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
-
 	Port := flag.Int("p", 0, "端口")
 	flag.Parse()
-	if *Port == 0 { //如果未指定监听端口,则随机选一个
+	if *Port == 0 { // 如果未指定监听端口,则随机选一个
 		p, err := utils.GetFreePort()
 		if err != nil {
 			panic(err)
@@ -32,9 +33,9 @@ func main() {
 		*Port = p
 	}
 
-	//1.
+	// 1.
 	initialize.InitLogger()
-	//2.
+	// 2.
 	initialize.InitConfig()
 	initialize.InitDB()
 
@@ -46,11 +47,11 @@ func main() {
 		panic(err)
 	}
 
-	//注册健康检查的服务(默认的接口实现)
+	// 注册健康检查的服务(默认的接口实现)
 	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
 
-	//注册到consul
-	//服务注册
+	// 注册到consul
+	// 服务注册
 	cfg := api.DefaultConfig()
 	cfg.Address = fmt.Sprintf("%s:%d", global.ServerConfig.ConsulInfo.Host,
 		global.ServerConfig.ConsulInfo.Port)
@@ -59,7 +60,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//生成对应的检查对象
+	// 生成对应的检查对象
 	check := &api.AgentServiceCheck{
 		GRPC:                           fmt.Sprintf("%s:%d", host, *Port),
 		Timeout:                        "3s",
@@ -67,11 +68,11 @@ func main() {
 		DeregisterCriticalServiceAfter: "10s",
 	}
 
-	//生成注册对象
+	// 生成注册对象
 	serviceID := uuid.New().String()
 	registration := new(api.AgentServiceRegistration)
-	registration.Name = global.ServerConfig.Name //注册的服务名字
-	registration.ID = serviceID                  //注册到consul时要保证id不同,同名又同id的服务将会被覆盖
+	registration.Name = global.ServerConfig.Name // 注册的服务名字
+	registration.ID = serviceID                  // 注册到consul时要保证id不同,同名又同id的服务将会被覆盖
 	registration.Port = *Port
 	registration.Tags = global.ServerConfig.Tags
 	registration.Address = host
@@ -86,7 +87,7 @@ func main() {
 	go func() {
 		panic(s.Serve(listener))
 	}()
-	//优雅退出,收到退出通知后,将自己的服务立刻注销(否则consul会很久之后才会注销)
+	// 优雅退出,收到退出通知后,将自己的服务立刻注销(否则consul会很久之后才会注销)
 	q := make(chan os.Signal, 1)
 	signal.Notify(q, syscall.SIGINT, syscall.SIGTERM)
 	<-q
@@ -95,5 +96,4 @@ func main() {
 	} else {
 		zap.S().Info("注销服务成功")
 	}
-
 }

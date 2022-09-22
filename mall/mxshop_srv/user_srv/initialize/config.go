@@ -4,18 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"mxshop_srv/user_srv/global"
+
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"mxshop_srv/user_srv/global"
 )
 
 func GetEnvInfo(env string) bool {
 	viper.AutomaticEnv()
 	return viper.GetBool(env)
-	//刚才设置的环境变量 想要生效 我们必须得重启goland
+	// 刚才设置的环境变量 想要生效 我们必须得重启goland
 }
 
 func InitConfig() {
@@ -37,7 +38,7 @@ func InitConfig() {
 	}
 	zap.S().Debugf("nacos配置信息:%#v", global.NacosConfig)
 
-	//从nacos中读取配置信息
+	// 从nacos中读取配置信息
 	sc := []constant.ServerConfig{
 		{
 			IpAddr: global.NacosConfig.Host,
@@ -65,8 +66,8 @@ func InitConfig() {
 
 	content, err := configClient.GetConfig(vo.ConfigParam{
 		DataId: global.NacosConfig.DataId,
-		Group:  global.NacosConfig.Group})
-
+		Group:  global.NacosConfig.Group,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -76,5 +77,4 @@ func InitConfig() {
 	}
 
 	zap.S().Debugf("配置信息:%#v", global.ServerConfig)
-
 }

@@ -7,10 +7,10 @@ import (
 	ut "github.com/go-playground/universal-translator"
 )
 
-//定义全局变量
+// 定义全局变量.
 
 var (
-	ServerConfig   = &config.ServerConfig{} //全局配置
+	ServerConfig   = &config.ServerConfig{} // 全局配置
 	Trans          ut.Translator
 	GoodsSrvClient proto.GoodsClient
 

@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"mxshop_api/user_web/forms"
 	"mxshop_api/user_web/global"
 	"mxshop_api/user_web/global/response"
 	"mxshop_api/user_web/middlewares"
 	"mxshop_api/user_web/models"
 	"mxshop_api/user_web/proto"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis/v9"
@@ -25,7 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// HandleGRPCErrorToHttp 为了方便,可以将GRPC的内部错误码转换为http的面向用户的错误码
+// HandleGRPCErrorToHttp 为了方便,可以将GRPC的内部错误码转换为http的面向用户的错误码.
 func HandleGRPCErrorToHttp(err error, c *gin.Context) {
 	if err != nil {
 		s, ok := status.FromError(err)
@@ -50,11 +51,10 @@ func HandleGRPCErrorToHttp(err error, c *gin.Context) {
 }
 
 func GetUserList(c *gin.Context) {
-
 	if info, ok := c.Get("claims"); ok {
-		zap.S().Infof("收到调用:%#v", info.(*models.CustomClaims)) //获取调用者的信息
+		zap.S().Infof("收到调用:%#v", info.(*models.CustomClaims)) // 获取调用者的信息
 	}
-	//1.获取分页信息
+	// 1.获取分页信息
 	pn := c.DefaultQuery("pn", "0")
 	pnInt, _ := strconv.Atoi(pn)
 	pSize := c.DefaultQuery("psize", "10")
@@ -70,16 +70,16 @@ func GetUserList(c *gin.Context) {
 		return
 	}
 
-	//将结果反馈至前端,
+	// 将结果反馈至前端,
 	result := make([]any, 0)
 	for _, value := range rsp.Data {
 
-		//更规范
+		// 更规范
 		user := response.UserResponse{
 			Id:       value.Id,
 			NickName: value.NickName,
-			//Birthday: time.Unix(int64(value.BirthDay), 0),
-			Birthday: time.Unix(int64(value.BirthDay), 0).Format("2006-01-02"), //日期格式化打印
+			// Birthday: time.Unix(int64(value.BirthDay), 0),
+			Birthday: time.Unix(int64(value.BirthDay), 0).Format("2006-01-02"), // 日期格式化打印
 			Gender:   value.Gender,
 			Mobile:   value.Mobile,
 		}
@@ -87,12 +87,11 @@ func GetUserList(c *gin.Context) {
 		result = append(result, user)
 	}
 	c.JSON(http.StatusOK, result)
-
 }
 
 func PasswordLogin(c *gin.Context) {
-	//密码登录
-	//1.表单验证
+	// 密码登录
+	// 1.表单验证
 	passwordLoginForm := forms.PasswordLoginForm{}
 	if err := c.ShouldBind(&passwordLoginForm); err != nil {
 		fmt.Printf("%t: %#v\n", err, err)
@@ -100,14 +99,15 @@ func PasswordLogin(c *gin.Context) {
 		return
 	}
 
-	//此处进行验证码(store是包内的全局储存),第三个参数为true代表使用一次后将清除验证码缓存(即判断后验证码就失效)
+	// 此处进行验证码(store是包内的全局储存),第三个参数为true代表使用一次后将清除验证码缓存(即判断后验证码就失效)
 	if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, false) {
 		c.JSON(http.StatusBadRequest, gin.H{"captcha": "验证码错误"})
 		return
 	}
 
 	if rsp, err := global.UserSrvClient.GetUserByMobile(c, &proto.MobileRequest{
-		Mobile: passwordLoginForm.Mobile}); err != nil {
+		Mobile: passwordLoginForm.Mobile,
+	}); err != nil {
 		if e, ok := status.FromError(err); ok {
 			switch e.Code() {
 			case codes.NotFound:
@@ -122,9 +122,10 @@ func PasswordLogin(c *gin.Context) {
 			return
 		}
 	} else {
-		//查询号码没问题,检查密码;注意rsp中已经取得了哈希过的密码
+		// 查询号码没问题,检查密码;注意rsp中已经取得了哈希过的密码
 		if _, passErr := global.UserSrvClient.CheckPassWord(c, &proto.CheckPasswordInfo{
-			Password: passwordLoginForm.Password, EncryptedPassword: rsp.Password}); passErr != nil {
+			Password: passwordLoginForm.Password, EncryptedPassword: rsp.Password,
+		}); passErr != nil {
 			if e, ok := status.FromError(passErr); ok {
 				switch e.Code() {
 				case codes.InvalidArgument:
@@ -138,16 +139,16 @@ func PasswordLogin(c *gin.Context) {
 				}
 				return
 			}
-		} else { //登录成功
+		} else { // 登录成功
 			j := middlewares.NewJWT()
 			claims := models.CustomClaims{
 				ID:         uint(rsp.Id),
 				NickName:   rsp.NickName,
 				AutorityId: uint(rsp.Role),
 				StandardClaims: jwt.StandardClaims{
-					//设置生效时间
-					NotBefore: time.Now().Unix(),                     //签名的生效时间(立即生效)
-					ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //过期时间,24小时
+					// 设置生效时间
+					NotBefore: time.Now().Unix(),                     // 签名的生效时间(立即生效)
+					ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), // 过期时间,24小时
 					Issuer:    "leilei",
 				},
 			}
@@ -158,7 +159,7 @@ func PasswordLogin(c *gin.Context) {
 				return
 			}
 
-			//将token写入并返回
+			// 将token写入并返回
 			c.JSON(http.StatusOK, gin.H{
 				"id":         rsp.Id,
 				"nick_name":  rsp.NickName,
@@ -170,16 +171,16 @@ func PasswordLogin(c *gin.Context) {
 	}
 }
 
-// Register 用户注册
+// Register 用户注册.
 func Register(c *gin.Context) {
-	//1.先获取用户注册所需的信息
+	// 1.先获取用户注册所需的信息
 	registerForm := forms.RegisterForm{}
 	if err := c.ShouldBind(&registerForm); err != nil {
 		HandleValidatorError(c, err)
 		return
 	}
 
-	//2.验证码校验
+	// 2.验证码校验
 	rdb := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf("%s:%d", global.ServerConfig.RedisInfo.Host, global.ServerConfig.RedisInfo.Port),
 	})
@@ -193,15 +194,15 @@ func Register(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"msg": "内部错误"})
 			return
 		}
-	} else if value != registerForm.Code { //验证码错误
+	} else if value != registerForm.Code { // 验证码错误
 		c.JSON(http.StatusBadRequest, gin.H{"msg": "验证码错误"})
 		return
 	}
 
-	//3.创建用户
+	// 3.创建用户
 
 	user, err := global.UserSrvClient.CreateUser(context.Background(), &proto.CreateUserInfo{
-		NickName: registerForm.Mobile, //默认nickname为电话
+		NickName: registerForm.Mobile, // 默认nickname为电话
 		Password: registerForm.Password,
 		Mobile:   registerForm.Mobile,
 	})
@@ -211,16 +212,16 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	//4.注册成功,写token
+	// 4.注册成功,写token
 	j := middlewares.NewJWT()
 	claims := models.CustomClaims{
 		ID:         uint(user.Id),
 		NickName:   user.NickName,
 		AutorityId: uint(user.Role),
 		StandardClaims: jwt.StandardClaims{
-			//设置生效时间
-			NotBefore: time.Now().Unix(),                     //签名的生效时间(立即生效)
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //过期时间,24小时
+			// 设置生效时间
+			NotBefore: time.Now().Unix(),                     // 签名的生效时间(立即生效)
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), // 过期时间,24小时
 			Issuer:    "leilei",
 		},
 	}
@@ -230,31 +231,30 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": "生成token失败", "err:": err.Error()})
 		return
 	}
-	//将token写入并返回
+	// 将token写入并返回
 	c.JSON(http.StatusOK, gin.H{
 		"id":         user.Id,
 		"nick_name":  user.NickName,
 		"token":      token,
 		"expired_at": time.Now().Add(time.Hour * 24).Unix(),
 	})
-
 }
 
 func HandleValidatorError(c *gin.Context, err error) {
 	var errs validator.ValidationErrors
 	if errors.As(err, &errs) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": removeTopStruct(errs.Translate(global.Trans)), //错误进行翻译
+			"error": removeTopStruct(errs.Translate(global.Trans)), // 错误进行翻译
 			//"error": errs.Translate(global.Trans), //错误进行翻译
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{ //非字段验证类型错误
+	c.JSON(http.StatusOK, gin.H{ // 非字段验证类型错误
 		"msg": err.Error(),
 	})
 }
 
-// "PasswordLoginForm.password": "password长度不能超过20个字符",删除前面的结构体名
+// "PasswordLoginForm.password": "password长度不能超过20个字符",删除前面的结构体名.
 func removeTopStruct(fields map[string]string) map[string]string {
 	rsp := map[string]string{}
 	for field, err := range fields {

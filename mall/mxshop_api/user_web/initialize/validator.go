@@ -2,9 +2,10 @@ package initialize
 
 import (
 	"fmt"
-	"mxshop_api/user_web/global"
 	"reflect"
 	"strings"
+
+	"mxshop_api/user_web/global"
 
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
@@ -15,11 +16,11 @@ import (
 	zh_trans "github.com/go-playground/validator/v10/translations/zh"
 )
 
-//翻译器
+// 翻译器.
 
 func InitTrans(local string) (err error) {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		//获取json的tag的自定义方法
+		// 获取json的tag的自定义方法
 		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
 			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
 			if name == "-" {
@@ -30,7 +31,7 @@ func InitTrans(local string) (err error) {
 
 		zhT := zh.New()
 		enT := en.New()
-		//分别对应,备用的语言环境,之后的2个是应该支持的语言环境
+		// 分别对应,备用的语言环境,之后的2个是应该支持的语言环境
 		uni := ut.New(enT, zhT, enT)
 		global.Trans, ok = uni.GetTranslator(local)
 		if !ok {

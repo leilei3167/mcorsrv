@@ -3,6 +3,7 @@ package initialize
 import (
 	"encoding/json"
 	"fmt"
+
 	"mxshop_api/goods_web/global"
 
 	"github.com/spf13/viper"
@@ -32,14 +33,14 @@ func InitConfig() {
 	if err := v.ReadInConfig(); err != nil {
 		panic(err)
 	}
-	//这个对象应该设置为全局变量
+	// 这个对象应该设置为全局变量
 
 	if err := v.Unmarshal(&global.NacosConfig); err != nil {
 		panic(err)
 	}
 	zap.S().Debugf("nacos配置信息:%#v", global.NacosConfig)
 
-	//从nacos中读取配置信息
+	// 从nacos中读取配置信息
 	sc := []constant.ServerConfig{
 		{
 			IpAddr: global.NacosConfig.Host,
@@ -67,8 +68,8 @@ func InitConfig() {
 
 	content, err := configClient.GetConfig(vo.ConfigParam{
 		DataId: global.NacosConfig.DataId,
-		Group:  global.NacosConfig.Group})
-
+		Group:  global.NacosConfig.Group,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +79,6 @@ func InitConfig() {
 	}
 
 	zap.S().Debugf("配置信息:%#v", global.ServerConfig)
-	//想要将一个json字符串转换成struct，需要去设置这个struct的tag
+	// 想要将一个json字符串转换成struct，需要去设置这个struct的tag
 	fmt.Printf("from nacos:%#v", content)
-
 }

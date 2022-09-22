@@ -10,7 +10,7 @@ func Encode(s string) (string, error) {
 	return string(hashedPwd), nil
 }
 
-func Compare(hashed string, inputPwd string) error {
+func Compare(hashed, inputPwd string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(inputPwd))
 
 	return err

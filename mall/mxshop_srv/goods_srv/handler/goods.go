@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+
 	"mxshop_srv/goods_srv/global"
 	"mxshop_srv/goods_srv/model"
 	"mxshop_srv/goods_srv/proto"
@@ -14,12 +15,12 @@ import (
 )
 
 type GoodsServer struct {
-	proto.UnimplementedGoodsServer //可以临时使用,快速启动grpcserver
+	proto.UnimplementedGoodsServer // 可以临时使用,快速启动grpcserver
 }
 
 var _ proto.GoodsServer = (*GoodsServer)(nil)
 
-// Paginate 官方文档中的分页
+// Paginate 官方文档中的分页.
 func Paginate(page, pageSize int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if page == 0 {
@@ -35,6 +36,7 @@ func Paginate(page, pageSize int) func(db *gorm.DB) *gorm.DB {
 		return db.Offset(offset).Limit(pageSize)
 	}
 }
+
 func ModelToResponse(goods model.Goods) proto.GoodsInfoResponse {
 	return proto.GoodsInfoResponse{
 		Id:              goods.ID,
@@ -54,7 +56,7 @@ func ModelToResponse(goods model.Goods) proto.GoodsInfoResponse {
 		OnSale:          goods.OnSale,
 		DescImages:      goods.DescImages,
 		Images:          goods.Images,
-		Category: &proto.CategoryBriefInfoResponse{ //简化的信息,不需要所有
+		Category: &proto.CategoryBriefInfoResponse{ // 简化的信息,不需要所有
 			Id:   goods.Category.ID,
 			Name: goods.Category.Name,
 		},
@@ -64,15 +66,14 @@ func ModelToResponse(goods model.Goods) proto.GoodsInfoResponse {
 			Logo: goods.Brands.Logo,
 		},
 	}
-
 }
 
 // GoodsList 商品列表页,关键是需要涉及到多种的过滤条件,如 关键词搜索,查询新品,查询热门商品,通过价格区间查询,根据分类筛选等等等
-//需要根据传入的字段来构建sql语句
+// 需要根据传入的字段来构建sql语句.
 func (g *GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterRequest) (*proto.GoodsListResponse, error) {
 	goodsListResponse := &proto.GoodsListResponse{}
 	var goods []model.Goods
-	localDB := global.DB.Model(&model.Goods{}) //根据传入的条件,一步一步增加查询语句
+	localDB := global.DB.Model(&model.Goods{}) // 根据传入的条件,一步一步增加查询语句
 	if req.KeyWords != "" {
 		localDB = localDB.Where("name LIKE ?", "%"+req.KeyWords+"%")
 	}
@@ -94,9 +95,9 @@ func (g *GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterReque
 		localDB = localDB.Where("brands_id = ?", req.Brand)
 	}
 
-	//通过category设置查找条件;当设置为1级分类时,需要查询2,3级下的商品,用到子查询即可
+	// 通过category设置查找条件;当设置为1级分类时,需要查询2,3级下的商品,用到子查询即可
 
-	if req.TopCategory > 0 { //查询确定该分类存在
+	if req.TopCategory > 0 { // 查询确定该分类存在
 		var category model.Category
 		if result := global.DB.First(&category, req.TopCategory); result.RowsAffected == 0 {
 			return nil, status.Errorf(codes.NotFound, "商品分类不存在")
@@ -117,12 +118,12 @@ func (g *GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterReque
 
 	goodsListResponse.Total = int32(count)
 
-	//需要取出外键的数据
+	// 需要取出外键的数据
 	result := localDB.Preload("Category").Preload("Brands").Scopes(Paginate(int(req.Pages), int(req.PagePerNums))).Find(&goods)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	//转换
+	// 转换
 	for _, good := range goods {
 		goodsInfoRsp := ModelToResponse(good)
 		goodsListResponse.Data = append(goodsListResponse.Data, &goodsInfoRsp)
@@ -132,7 +133,7 @@ func (g *GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterReque
 
 func (g *GoodsServer) BatchGetGoods(ctx context.Context, req *proto.BatchGoodsIdInfo) (*proto.GoodsListResponse, error) {
 	goodsListResponse := &proto.GoodsListResponse{}
-	//传入id切片 查询一批
+	// 传入id切片 查询一批
 	var goods []model.Goods
 	result := global.DB.Find(&goods, req.Id)
 	for _, good := range goods {
@@ -151,7 +152,7 @@ func (g *GoodsServer) DeleteGoods(ctx context.Context, req *proto.DeleteGoodsInf
 }
 
 func (g *GoodsServer) CreateGoods(ctx context.Context, req *proto.CreateGoodsInfo) (*proto.GoodsInfoResponse, error) {
-	//先确定是否已存在
+	// 先确定是否已存在
 	var category model.Category
 	if result := global.DB.First(&category, req.CategoryId); result.RowsAffected == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "商品分类不存在")
@@ -184,13 +185,13 @@ func (g *GoodsServer) CreateGoods(ctx context.Context, req *proto.CreateGoodsInf
 }
 
 func (g *GoodsServer) UpdateGoods(ctx context.Context, req *proto.CreateGoodsInfo) (*emptypb.Empty, error) {
-	//先确定是否已存在
+	// 先确定是否已存在
 	var goods model.Goods
 	if result := global.DB.First(&goods, req.Id); result.RowsAffected == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "商品不存在")
 	}
 
-	var category model.Category //查询待修改的 category 确保存在
+	var category model.Category // 查询待修改的 category 确保存在
 	if result := global.DB.First(&category, req.CategoryId); result.RowsAffected == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "商品分类不存在")
 	}
