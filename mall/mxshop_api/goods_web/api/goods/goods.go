@@ -2,74 +2,16 @@ package goods
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
+	"mxshop_api/goods_web/api"
 	"mxshop_api/goods_web/forms"
 	"mxshop_api/goods_web/global"
 	"mxshop_api/goods_web/proto"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
-
-func HandleGrpcErrorToHttp(err error, c *gin.Context) {
-	// 将grpc的code转换成http的状态码
-	if err != nil {
-		if e, ok := status.FromError(err); ok {
-			switch e.Code() {
-			case codes.NotFound:
-				c.JSON(http.StatusNotFound, gin.H{
-					"msg": e.Message(),
-				})
-			case codes.Internal:
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"msg:": "内部错误",
-				})
-			case codes.InvalidArgument:
-				c.JSON(http.StatusBadRequest, gin.H{
-					"msg": "参数错误",
-				})
-			case codes.Unavailable:
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"msg": "用户服务不可用",
-				})
-			default:
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"msg": e.Code(),
-				})
-			}
-			return
-		}
-	}
-}
-
-func HandleValidatorError(c *gin.Context, err error) {
-	var errs validator.ValidationErrors
-	if errors.As(err, &errs) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": removeTopStruct(errs.Translate(global.Trans)), // 错误进行翻译
-			//"error": errs.Translate(global.Trans), //错误进行翻译
-		})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{ // 非字段验证类型错误
-		"msg": err.Error(),
-	})
-}
-
-// "PasswordLoginForm.password": "password长度不能超过20个字符",删除前面的结构体名.
-func removeTopStruct(fields map[string]string) map[string]string {
-	rsp := map[string]string{}
-	for field, err := range fields {
-		rsp[field[strings.Index(field, ".")+1:]] = err
-	}
-	return rsp
-}
 
 func List(c *gin.Context) {
 	// 商品列表主要是要过滤,大部分都是通过url的参数来传递;重要的是和前端约定好参数名称
@@ -120,7 +62,7 @@ func List(c *gin.Context) {
 	// 调用服务
 	r, err := global.GoodsSrvClient.GoodsList(context.Background(), req)
 	if err != nil {
-		HandleGrpcErrorToHttp(err, c)
+		api.HandleGrpcErrorToHttp(err, c)
 		return
 	}
 
@@ -163,7 +105,7 @@ func New(c *gin.Context) {
 	// 先拿要创建的商品的信息
 	goodsForm := forms.GoodsForm{}
 	if err := c.ShouldBind(&goodsForm); err != nil {
-		HandleValidatorError(c, err)
+		api.HandleValidatorError(c, err)
 		return
 	}
 
@@ -184,7 +126,7 @@ func New(c *gin.Context) {
 		BrandId:    goodsForm.Brand,
 	})
 	if err != nil {
-		HandleGrpcErrorToHttp(err, c)
+		api.HandleGrpcErrorToHttp(err, c)
 		return
 	}
 	// TODO: 如何设置库存? 需要单独的商品库存服务
@@ -201,7 +143,7 @@ func Detail(c *gin.Context) {
 	}
 	r, err := global.GoodsSrvClient.GetGoodsDetail(c, &proto.GoodInfoRequest{Id: int32(i)})
 	if err != nil {
-		HandleGrpcErrorToHttp(err, c)
+		api.HandleGrpcErrorToHttp(err, c)
 		return
 	}
 
@@ -232,4 +174,95 @@ func Detail(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, rsp)
+}
+
+func Delete(c *gin.Context) {
+	id := c.Param("id")
+	i, err := strconv.Atoi(id)
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	_, err = global.GoodsSrvClient.DeleteGoods(c, &proto.DeleteGoodsInfo{Id: int32(i)})
+	if err != nil {
+		api.HandleGrpcErrorToHttp(err, c)
+		return
+	}
+	c.Status(http.StatusOK)
+}
+
+func UpdateStatus(c *gin.Context) {
+	// 和创建类似
+	goodsStatusForm := forms.GoodsStatusForm{}
+	if err := c.ShouldBindJSON(&goodsStatusForm); err != nil {
+		api.HandleValidatorError(c, err)
+		return
+	}
+
+	id := c.Param("id")
+	i, err := strconv.Atoi(id)
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	if _, err = global.GoodsSrvClient.UpdateGoods(context.Background(), &proto.CreateGoodsInfo{
+		Id:     int32(i),
+		IsHot:  *goodsStatusForm.IsHot,
+		IsNew:  *goodsStatusForm.IsNew,
+		OnSale: *goodsStatusForm.OnSale,
+	}); err != nil {
+		api.HandleGrpcErrorToHttp(err, c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "修改成功",
+	})
+}
+
+func Update(c *gin.Context) {
+	goodsForm := forms.GoodsForm{}
+	if err := c.ShouldBindJSON(&goodsForm); err != nil {
+		api.HandleValidatorError(c, err)
+		return
+	}
+
+	id := c.Param("id")
+	i, err := strconv.Atoi(id)
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	if _, err = global.GoodsSrvClient.UpdateGoods(context.Background(), &proto.CreateGoodsInfo{
+		Id:              int32(i),
+		Name:            goodsForm.Name,
+		GoodsSn:         goodsForm.GoodsSn,
+		Stocks:          goodsForm.Stocks,
+		MarketPrice:     goodsForm.MarketPrice,
+		ShopPrice:       goodsForm.ShopPrice,
+		GoodsBrief:      goodsForm.GoodsBrief,
+		ShipFree:        *goodsForm.ShipFree,
+		Images:          goodsForm.Images,
+		DescImages:      goodsForm.DescImages,
+		GoodsFrontImage: goodsForm.FrontImage,
+		CategoryId:      goodsForm.CategoryId,
+		BrandId:         goodsForm.Brand,
+	}); err != nil {
+		api.HandleGrpcErrorToHttp(err, c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "更新成功",
+	})
+}
+
+func Stock(c *gin.Context) { // 库存服务作为一个单独的库存接口,用于获取商品的库存
+	id := c.Param("id")
+	_, err := strconv.Atoi(id)
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	// TODO: 编写库存服务
 }

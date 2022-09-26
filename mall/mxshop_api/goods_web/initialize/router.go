@@ -25,6 +25,9 @@ func Routers() *gin.Engine {
 	ApiGroup := r.Group("/g/v1")
 	// 向router中添加路由分组
 	router.InitGoodsRouter(ApiGroup) // v1/user/
+	router.InitCategoryRouter(ApiGroup)
+	router.InitBannerRouter(ApiGroup)
+	router.InitBrandRouter(ApiGroup)
 
 	return r
 }
