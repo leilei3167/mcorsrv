@@ -21,7 +21,10 @@ require (
 	google.golang.org/protobuf v1.28.1
 )
 
+require golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+
 require (
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.5+incompatible
 	github.com/armon/go-metrics v0.3.10 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
