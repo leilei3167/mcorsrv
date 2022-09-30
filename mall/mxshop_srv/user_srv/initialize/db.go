@@ -40,5 +40,10 @@ func InitDB() {
 		panic(err)
 	}
 
+	d, _ := global.DB.DB()
+	d.SetMaxOpenConns(100)
+	d.SetMaxIdleConns(100)
+	d.SetConnMaxIdleTime(time.Hour)
+
 	_ = global.DB.AutoMigrate(&model.User{})
 }
