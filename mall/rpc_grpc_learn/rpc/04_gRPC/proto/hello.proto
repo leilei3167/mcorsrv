@@ -1,0 +1,18 @@
+syntax = "proto3"; //固定写法,指定protobuf版本,基本用最新的proto3版本即可
+
+option go_package = ".;proto"; //指定go的package,还可以设置多种语言的包,如java等
+
+service Greeter{ //定义Greeter接口,此类内容会被gRPC框架识别,生成对应的语言代码,生成的是一个Greeter接口
+  rpc SayHello(HelloRequest) returns (HelloReply);
+}
+
+
+message HelloRequest {//对象,类似于Go中的struct
+  string name = 1; //注意 1是编号,而不是值
+}
+
+message HelloReply{
+  string message =1;
+}
+
+// protoc -I . --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative xxx.proto
